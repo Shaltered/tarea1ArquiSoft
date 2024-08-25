@@ -1,0 +1,51 @@
+version: '3.7'
+
+services:
+  service1:
+    build: ./service1
+    ports:
+      - "8000:8000"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    volumes:
+      - /var/log/service1:/var/log
+
+  service2:
+    build: ./service2
+    ports:
+      - "8001:8001"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    volumes:
+      - /var/log/service2:/var/log
+
+  loki:
+    image: grafana/loki:2.5.0
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./loki:/etc/loki
+      - ./loki_data:/loki
+
+  promtail:
+    image: grafana/promtail:2.5.0
+    volumes:
+      - ./promtail:/etc/promtail
+      - ./promtail/log:/var/log
+      - /var/log/service1:/var/log/service1
+      - /var/log/service2:/var/log/service2
+    command: -config.file=/etc/promtail/promtail-config.yaml
+
+  grafana:
+    image: grafana/grafana:9.2.5
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana:/var/lib/grafana
